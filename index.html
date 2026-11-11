@@ -117,12 +117,12 @@ footer{margin-top:auto;padding-top:40px;font-size:.85rem;color:rgba(242,238,252,
 }
 
 /* Mini player musicale */
-.music-player{width:100%;max-width:340px;margin:0 0 26px;padding:13px 16px;display:flex;align-items:center;gap:13px;border:1px solid var(--line);border-radius:18px;background:rgba(242,238,252,.09);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);text-align:left}
-.music-toggle{width:46px;height:46px;flex:none;display:grid;place-items:center;border:0;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet));color:var(--ink);font-size:20px;cursor:pointer}
-.music-toggle:focus-visible,.music-volume:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
-.music-info{flex:1;min-width:0}.music-info strong{display:block;font:600 .9rem var(--body)}.music-info small{display:block;margin-top:4px;font-size:.76rem;opacity:.75}
-.music-volume{width:70px;accent-color:var(--cyan);cursor:pointer}
-@media(max-width:360px){.music-player{gap:9px;padding:10px}.music-volume{width:54px}}
+/* Controllo audio minimale, senza player tradizionale */
+.music-mini{display:flex;justify-content:center;margin:0 0 24px}
+.music-toggle{display:inline-flex;align-items:center;gap:9px;min-height:38px;padding:8px 15px;border:1px solid var(--line);border-radius:999px;background:rgba(242,238,252,.07);color:var(--bone);font:600 .78rem var(--body);letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(10px)}
+.music-toggle::before{content:'♫';font-size:1.15rem;color:var(--cyan)}
+.music-toggle.is-playing{border-color:rgba(41,227,208,.55)}
+.music-toggle:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
 </style>
 </head>
 <body>
@@ -146,10 +146,8 @@ footer{margin-top:auto;padding-top:40px;font-size:.85rem;color:rgba(242,238,252,
   <p class="tagline">Dance Music Producer</p>
   <svg class="wave" viewBox="0 0 97 22" aria-hidden="true"><path d="M2 11h14c4 0 5-8 9-8s5 16 9 16 5-16 9-16 5 16 9 16 5-16 9-16 5 16 9 16 5-16 9-16 5 16 9 16 5-8 9-8h14"/></svg>
 
-  <div class="music-player" role="group" aria-label="Musica di sottofondo">
-    <button class="music-toggle" id="musicToggle" type="button" aria-label="Riproduci musica" aria-pressed="false">▶</button>
-    <div class="music-info"><strong>EMASYNTH RADIO</strong><small id="musicStatus" aria-live="polite">Premi play per ascoltare</small></div>
-    <input class="music-volume" id="musicVolume" type="range" min="0" max="1" step="0.05" value="0.35" aria-label="Volume musica">
+  <div class="music-mini" role="group" aria-label="Musica di sottofondo">
+    <button class="music-toggle" id="musicToggle" type="button" aria-label="Attiva musica" aria-pressed="false"><span id="musicStatus">Attiva musica</span></button>
     <audio id="backgroundMusic" src="musica.mp3" preload="none" loop></audio>
   </div>
 
@@ -190,24 +188,24 @@ footer{margin-top:auto;padding-top:40px;font-size:.85rem;color:rgba(242,238,252,
   const music = document.getElementById('backgroundMusic');
   const musicToggle = document.getElementById('musicToggle');
   const musicStatus = document.getElementById('musicStatus');
-  const musicVolume = document.getElementById('musicVolume');
-  music.volume = Number(musicVolume.value);
-  musicVolume.addEventListener('input', () => { music.volume = Number(musicVolume.value); });
+  music.volume = 0.35;
   function updateMusicUI() {
     const playing = !music.paused;
-    musicToggle.textContent = playing ? '❚❚' : '▶';
-    musicToggle.setAttribute('aria-label', playing ? 'Metti in pausa' : 'Riproduci musica');
+    musicToggle.classList.toggle('is-playing', playing);
     musicToggle.setAttribute('aria-pressed', String(playing));
-    musicStatus.textContent = playing ? 'In riproduzione · loop' : 'Premi play per ascoltare';
+    musicToggle.setAttribute('aria-label', playing ? 'Disattiva musica' : 'Attiva musica');
+    musicStatus.textContent = playing ? 'Musica attiva · pausa' : 'Attiva musica';
   }
   musicToggle.addEventListener('click', async () => {
     if (!music.paused) { music.pause(); return; }
     try { await music.play(); }
-    catch (error) { musicStatus.textContent = 'Audio non disponibile: aggiungi musica.mp3'; }
+    catch (_) { musicStatus.textContent = 'Audio non disponibile'; }
   });
   music.addEventListener('play', updateMusicUI);
   music.addEventListener('pause', updateMusicUI);
-  music.addEventListener('error', () => { musicStatus.textContent = 'Carica il file musica.mp3'; });
+  music.addEventListener('error', () => { musicStatus.textContent = 'Audio non disponibile'; });
+  // I browser possono bloccare l'autoplay con audio: in quel caso resta il piccolo pulsante.
+  window.addEventListener('load', () => { music.play().catch(() => { updateMusicUI(); }); });
 
 </script>
 </body>
